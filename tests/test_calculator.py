@@ -1,4 +1,3 @@
-import pytest
 from calculator import add, divide
 
 def test_add_basic():
@@ -9,5 +8,8 @@ def test_divide_basic():
     assert divide(10, 2) == 5
 
 def test_divide_by_zero():
-    with pytest.raises(ValueError):
+    try:
         divide(1, 0)
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
