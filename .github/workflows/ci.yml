@@ -2,47 +2,58 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8
 
-      - name: Lint (flake8)
+      - name: Show Project Structure
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+          pwd
+          ls -R
 
-      - name: Test with coverage
+      - name: Run Flake8
         run: |
-          pytest -q --cov=. --cov-report=xml --cov-report=term
-          
-      - name: Enforce coverage threshold (80%)
+          flake8 .
+
+      - name: Run Pytest
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m pytest tests/ --cov=. --cov-report=xml --cov-report=term
+
+      - name: Check Coverage
         run: |
           python - << 'PY'
           import xml.etree.ElementTree as ET
+
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
-          # Cobertura-style coverage
-          lines_valid = int(root.get('lines-valid', '0'))
-          lines_covered = int(root.get('lines-covered', '0'))
-          pct = (lines_covered / lines_valid) * 100 if lines_valid else 0
-          print(f"Coverage: {pct:.2f}%")
-          assert pct >= 80, f"Coverage {pct:.2f}% < 80% threshold"
+
+          lines_valid = int(root.get('lines-valid', 0))
+          lines_covered = int(root.get('lines-covered', 0))
+
+          coverage = (lines_covered / lines_valid) * 100 if lines_valid else 0
+
+          print(f"Coverage: {coverage:.2f}%")
+
+          assert coverage >= 80, "Coverage below 80%"
           PY
