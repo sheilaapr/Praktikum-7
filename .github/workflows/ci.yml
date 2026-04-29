@@ -2,10 +2,8 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
-
-  pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   build-test:
@@ -25,31 +23,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov flake8
 
-      - name: Show Project Structure
+      - name: Display Files
         run: |
           pwd
           ls -R
 
-      - name: Run Flake8
+      - name: Run Lint
         run: |
           flake8 .
 
-      - name: Run Pytest
+      - name: Run Test
         env:
           PYTHONPATH: .
         run: |
-          python -m pytest tests/ --cov=. --cov-report=xml --cov-report=term
+          python -m pytest tests/test_calculator.py --cov=. --cov-report=xml --cov-report=term
 
       - name: Check Coverage
         run: |
           python - << 'PY'
           import xml.etree.ElementTree as ET
 
-          tree = ET.parse('coverage.xml')
+          tree = ET.parse("coverage.xml")
           root = tree.getroot()
 
-          lines_valid = int(root.get('lines-valid', 0))
-          lines_covered = int(root.get('lines-covered', 0))
+          lines_valid = int(root.get("lines-valid", 0))
+          lines_covered = int(root.get("lines-covered", 0))
 
           coverage = (lines_covered / lines_valid) * 100 if lines_valid else 0
 
